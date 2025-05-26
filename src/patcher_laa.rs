@@ -159,33 +159,43 @@ fn make_backup(path: &Path, backup_extension: &str) -> Result<()> {
 	Ok(())
 }
 
+// pub fn patch_exe(exe_path: &Path) -> Result<String> {
+// 	let hash = sha_hash_path(exe_path)?;
+// 	if get_hash_set_from_str(STEAM_HASH_STR).contains(&hash) {
+// 		make_backup(exe_path, "steam_backup")?;
+// 		remove_steam_drm(exe_path).context("Failed to remove Steam DRM")?;
+// 		make_backup(exe_path, "steamless_backup")?;
+// 		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
+// 		Ok("Patched Steam Version".to_string())
+// 	} else if get_hash_set_from_str(STEAMLESS_HASH_STR).contains(&hash) {
+// 		make_backup(exe_path, "steamless_backup")?;
+// 		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
+// 		Ok("Patched Steamless Version".to_string())
+// 	} else if get_hash_set_from_str(GOG_HASH_STR).contains(&hash) {
+// 		make_backup(exe_path, "gog_backup")?;
+// 		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
+// 		Ok("Patched GOG Version".to_string())
+// 	} else if is_laa(exe_path)? {
+// 		Ok("Already patched".to_string())
+// 	} else {
+// 		Err(anyhow!(
+// 			format!("Unknown version of Battle Brothers, if there is a new version, make a GitHub issue. Hash: {:#?}", hash)
+// 		))
+// 	}
+// }
+
 pub fn patch_exe(exe_path: &Path) -> Result<String> {
-	let hash = sha_hash_path(exe_path)?;
-	if get_hash_set_from_str(STEAM_HASH_STR).contains(&hash) {
-		make_backup(exe_path, "steam_backup")?;
-		remove_steam_drm(exe_path).context("Failed to remove Steam DRM")?;
-		make_backup(exe_path, "steamless_backup")?;
-		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
-		Ok("Patched Steam Version".to_string())
-	} else if get_hash_set_from_str(STEAMLESS_HASH_STR).contains(&hash) {
+	if is_laa(exe_path)? {
+		Ok("Already patched".to_string())
+	} else {
 		make_backup(exe_path, "steamless_backup")?;
 		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
 		Ok("Patched Steamless Version".to_string())
-	} else if get_hash_set_from_str(GOG_HASH_STR).contains(&hash) {
-		make_backup(exe_path, "gog_backup")?;
-		make_laa(exe_path).context("Failed to apply 4GB Patch")?;
-		Ok("Patched GOG Version".to_string())
-	} else if is_laa(exe_path)? {
-		Ok("Already patched".to_string())
-	} else {
-		Err(anyhow!(
-			"Unknown version of Battle Brothers, if there is a new version, make a GitHub issue."
-		))
 	}
 }
 
-pub fn patch_from_config(config: ReadOnlySignal<Config, SyncStorage>) -> Result<()> {
-	let exe_path = match config.read().get_bb_exe_path() {
+pub fn patch_from_config(config: &Config) -> Result<()> {
+	let exe_path = match config.get_bb_exe_path() {
 		Some(path) => path,
 		None => {
 			let error = "Couldn't find BattleBrothers.exe";
@@ -193,6 +203,7 @@ pub fn patch_from_config(config: ReadOnlySignal<Config, SyncStorage>) -> Result<
 			return Err(anyhow!(error));
 		}
 	};
+	dbg!(&exe_path);
 	match patch_exe(exe_path.as_ref()) {
 		Ok(msg) => {
 			tracing::info!("{}", msg);

@@ -190,3 +190,26 @@ pub async fn async_gather_and_create_mod(config: ReadOnlySignal<Config, SyncStor
 pub async fn mt_gather_and_create_mod(config: ReadOnlySignal<Config, SyncStorage>) {
 	let _ = tokio::spawn(async move { async_gather_and_create_mod(config).await }).await;
 }
+
+pub fn patch(data_path: Option<DataPath>) {
+	let path = match data_path {
+		Some(path) => path,
+		None => {
+			tracing::error!("Couldn't find /data folder");
+			return;
+		}
+	};
+	match sync_gather_and_create_mod(&path) {
+		Ok(_) => {
+			tracing::info!("Patcher Succeeded");
+		}
+		Err(e) => {
+			tracing::error!("Patcher failed: {}", e);
+		}
+	}
+}
+
+pub fn patch_from_config(config: &Config) {
+	let data_path = config.get_bb_data_path();
+	patch(data_path);
+}
