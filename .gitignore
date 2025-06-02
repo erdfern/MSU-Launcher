@@ -17,3 +17,6 @@ tailwind.css
 config.toml
 msu_logo.ico
 tasks.json
+
+.direnv
+.devenv
